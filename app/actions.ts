@@ -8,31 +8,102 @@ import { redirect } from "next/navigation";
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const role = formData.get("role")?.toString();
+  const schoolName = formData.get("schoolName")?.toString();
+  const location = formData.get("location")?.toString();
+  const curriculumType = formData.get("curriculumType")?.toString();
+  const fullName = formData.get("fullName")?.toString();
+  const subjects = formData.getAll("subjects");
+  const qualifications = formData.get("qualifications")?.toString();
+  const experienceYears = formData.get("experienceYears")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
-  if (!email || !password) {
-    return { error: "Email and password are required" };
+  if (!email || !password || !role || (!schoolName && !fullName)) {
+    return encodedRedirect("error", "/sign-up", "All fields are required");
   }
 
-  const { error } = await supabase.auth.signUp({
+  // Validate role
+  if (role !== 'teacher' && role !== 'school') {
+    
+    return encodedRedirect("error", "/sign-up", "Invalid role selected");
+  }
+
+  const { data: { user }, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
-    },
+      data: {
+        full_name: fullName || schoolName,
+        role: role
+      }
+    }
   });
 
   if (error) {
-    console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
-    );
   }
+
+  if (!user) {
+    return encodedRedirect("error", "/sign-up","Not Valid Information");
+  }
+
+  // Create profile based on role
+  const profile = {
+    id: user.id,
+    full_name: fullName || schoolName,
+    role: role,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert([profile]);
+
+  if (profileError) {
+    await supabase.auth.admin.deleteUser(user.id);
+    return encodedRedirect("error", "/sign-up", profileError.message);
+  }
+
+  // Create role-specific profile
+  if (role === 'teacher') {
+    const teacherProfile = {
+      id: user.id,
+      full_name: fullName,
+      subjects: subjects,
+      qualifications: qualifications,
+      experience_years: parseInt(experienceYears || '0')
+    };
+    const { error: teacherError } = await supabase
+      .from('teacher_profiles')
+      .insert([teacherProfile]);
+    if (teacherError) {
+      await supabase.auth.admin.deleteUser(user.id);
+      return encodedRedirect("error", "/sign-up", teacherError.message);
+    }
+  } else if (role === 'school') {
+    const schoolProfile = {
+      id: user.id,
+      school_name: schoolName,
+      location: location,
+      curriculum_type: curriculumType
+    };
+    const { error: schoolError } = await supabase
+      .from('school_profiles')
+      .insert([schoolProfile]);
+    if (schoolError) {
+      await supabase.auth.admin.deleteUser(user.id);
+      return encodedRedirect("error", "/sign-in", schoolError.message);
+    }
+  }
+
+  return encodedRedirect(
+    "success",
+    "/sign-in",
+    "Thanks for signing up! Please check your email for a verification link."
+  );
 };
 
 export const signInAction = async (formData: FormData) => {
@@ -48,8 +119,26 @@ export const signInAction = async (formData: FormData) => {
   if (error) {
     return encodedRedirect("error", "/sign-in", error.message);
   }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return encodedRedirect("error", "/sign-in", "User not found");
+  }
+  
+  const metadata = user.user_metadata;
+  const role = metadata.role;
 
-  return redirect("/protected");
+if (role === 'teacher') {
+  return redirect("/protected/teacher/dashboard");
+} else if (role === 'school') {
+  return redirect("/protected/school/dashboard");
+} else {
+  return encodedRedirect("error", "/sign-in", "User not found");
+}
+
+
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
