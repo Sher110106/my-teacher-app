@@ -30,20 +30,18 @@ export async function POST(req: Request) {
     console.log('Supabase client initialized');
 
     // Fetch teacher data
-    console.log('Fetching teacher data...');
     const { data: teacherData, error: teacherError } = await supabase
-      .from('profiles')
-      .select('full_name, email')
-      .eq('id', record.teacher_id)
-      .single();
-
-    // Fetch school data
-    console.log('Fetching school data...');
-    const { data: schoolData, error: schoolError } = await supabase
-      .from('profiles')
-      .select('school_name, email')
-      .eq('id', record.school_id)
-      .single();
+    .from('teacher_profiles')
+    .select('full_name, email')
+    .eq('id', record.teacher_id)
+    .single();
+  
+  // Fetch school data
+  const { data: schoolData, error: schoolError } = await supabase
+    .from('school_profiles')
+    .select('school_name, email')
+    .eq('id', record.school_id)
+    .single();
 
     // Handle errors while fetching profiles
     if (teacherError || schoolError) {
