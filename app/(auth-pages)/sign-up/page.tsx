@@ -37,13 +37,25 @@ export default function Signup(props: { searchParams: Promise<Message>; }) {
     setSelectedSubjects(value);
     
   };
-
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault(); // Prevent the default form submission
+    
+    try {
+      // Create FormData from the form submission
+      const formData = new FormData(event.target as HTMLFormElement);
+  
+      // Call signUpAction (which already handles redirect)
+      await signUpAction(formData);
+    } catch (error) {
+      // Handle any errors during the signup process
+      console.error("An error occurred during sign-up:", error);
+    }
+  };
   return (
     <>
       <form
+        onSubmit={handleSubmit}
         className="flex flex-col min-w-64 max-w-64 mx-auto"
-        method="POST"
-        action="/api/sign-up"
       >
         <h1 className="text-2xl font-medium">Sign up</h1>
         <p className="text-sm text text-foreground">
@@ -164,7 +176,7 @@ export default function Signup(props: { searchParams: Promise<Message>; }) {
             </>
           )}
 
-          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
+          <SubmitButton pendingText="Signing up...">
             Sign up
           </SubmitButton>
           {searchParams && <FormMessage message={searchParams} />}
