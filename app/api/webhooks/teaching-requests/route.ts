@@ -9,7 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 
 function isValidSignature(signature: string, payload: string, secret: string): boolean {
   console.log('Validating signature...');
-  const hmac = crypto.createHmac('sha256', secret).update(payload).digest('base64');
+  const hmac = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
   console.log('Signature validation result:', isValid);
   return isValid;
