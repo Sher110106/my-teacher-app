@@ -13,14 +13,19 @@ export async function POST(req: Request) {
     const payload = await req.json();
     console.log('Received payload:', payload);
 
-    // Extract event and record details
-    const { event, record } = payload;
+    // Validate the payload structure
+    const { type, record, table, schema } = payload;
 
-    if (!event || !record) {
-      console.error('Invalid webhook payload');
+    if (!type || !record) {
+      console.error('Invalid webhook payload. Missing "type" or "record".');
       return new Response('Invalid webhook payload', { status: 400 });
     }
 
+    // Log for debugging
+    console.log(`Event type: ${type}, Table: ${table}, Schema: ${schema}`);
+    console.log('Record:', record);
+
+    // Initialize Supabase client
     const supabase = await createClient();
     console.log('Supabase client initialized');
 
@@ -40,6 +45,7 @@ export async function POST(req: Request) {
       .eq('id', record.school_id)
       .single();
 
+    // Handle errors while fetching profiles
     if (teacherError || schoolError) {
       console.error('Error fetching profiles:', {
         teacherError,
@@ -63,8 +69,9 @@ export async function POST(req: Request) {
     );
     console.log('Email HTML generated');
 
-    // Send email based on the status of the request
+    // Handle request status and send email
     console.log('Processing request status:', record.status);
+
     try {
       switch (record.status) {
         case 'pending':
@@ -102,6 +109,7 @@ export async function POST(req: Request) {
       }
     } catch (emailError) {
       console.error('Error sending email:', emailError);
+      // Allow webhook acknowledgment even if email fails
     }
 
     console.log('Webhook processed successfully');
