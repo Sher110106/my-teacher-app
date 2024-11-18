@@ -17,7 +17,10 @@ export const signUpAction = async (formData: FormData) => {
   const qualifications = formData.get("qualifications")?.toString();
   const experienceYears = formData.get("experienceYears")?.toString();
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const headersList = await headers();
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const host = headersList.get("host");
+  const baseUrl = `${protocol}://${host}`;
 
   if (!email || !password || !role || (!schoolName && !fullName)) {
     return encodedRedirect("error", "/sign-up", "All fields are required");
@@ -33,7 +36,7 @@ export const signUpAction = async (formData: FormData) => {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${baseUrl}/auth/callback`,
       data: {
         full_name: fullName || schoolName,
         role: role
