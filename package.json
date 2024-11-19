@@ -23,6 +23,7 @@
     "autoprefixer": "10.4.17",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "geist": "^1.2.1",
     "lucide-react": "^0.436.0",
     "next": "latest",
@@ -32,6 +33,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.2",
     "resend": "^4.0.1-alpha.0",
+    "sonner": "^1.7.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
