@@ -144,11 +144,11 @@ if (role === 'teacher') {
 
 };
 
+
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
-  const callbackUrl = formData.get("callbackUrl")?.toString();
 
   if (!email) {
     return encodedRedirect("error", "/forgot-password", "Email is required");
@@ -159,26 +159,16 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.message);
-    return encodedRedirect(
-      "error",
-      "/forgot-password",
-      "Could not reset password",
-    );
-  }
-
-  if (callbackUrl) {
-    return redirect(callbackUrl);
+    console.error("Password reset error:", error.message);
+    return encodedRedirect("error", "/forgot-password", error.message);
   }
 
   return encodedRedirect(
     "success",
     "/forgot-password",
-    "Check your email for a link to reset your password.",
+    "Check your email for a link to reset your password."
   );
 };
-
-
 export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
