@@ -1,25 +1,27 @@
 import { createClient } from "@/utils/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
-  const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+  const redirectTo = requestUrl.searchParams.get("next") || "/protected";
 
-  if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      console.error("Failed to exchange code for session:", error.message);
-      return NextResponse.redirect(`${origin}/error?message=${encodeURIComponent(error.message)}`);
-    }
+  if (!code) {
+    return NextResponse.redirect(
+      `${origin}/sign-in?error=${encodeURIComponent("No code provided")}`
+    );
   }
 
-  if (redirectTo) {
-    return NextResponse.redirect(`${origin}${redirectTo}`);
+  const supabase = await createClient();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    console.error("Auth callback error:", error.message);
+    return NextResponse.redirect(
+      `${origin}/sign-in?error=${encodeURIComponent(error.message)}`
+    );
   }
 
-  return NextResponse.redirect(`${origin}/protected`);
+  return NextResponse.redirect(`${origin}${redirectTo}`);
 }
