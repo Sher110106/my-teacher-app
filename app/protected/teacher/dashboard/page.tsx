@@ -1,33 +1,27 @@
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation";
-import { InfoIcon } from "lucide-react";
+// app/(dashboard)/teacher/page.tsx
+import { TeachingRequestsList } from '@/components/TeachingRequestsProvider';
+import { createClient } from "@/utils/supabase/server";
 
-export default async function teacher(){
-    const supabase=await createClient();
-    const {
-        data:{user} 
-    }=await supabase.auth.getUser();
-    if(!user){
-        redirect('/sign-in')
+export default async function TeacherDashboard() {
+  const supabase = await createClient();
 
-    }
-    return(
-        <div className="flex-1 w-full flex flex-col gap-12">
-        <div className="w-full">
-          <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-            <InfoIcon size="16" strokeWidth={2} />
-            This is a protected page that you can only see as an authenticated
-            user
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 items-start">
-          <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-          <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
-        
-      </div>
-        
-    )
-};
+  // Fetch initial requests
+  const { data: initialRequests } = await supabase
+    .from('teaching_requests')
+    .select(`
+      *,
+      school:school_profiles(
+        school_name,
+        location,
+        curriculum_type
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Teaching Requests</h1>
+      <TeachingRequestsList initialRequests={initialRequests || []} />
+    </div>
+  );
+}
