@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
   
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash,
-    type,
-  });
+  const { error } = await supabase.auth.exchangeCodeForSession(token_hash);
 
   if (error) {
     console.error("Verification error:", error.message);
