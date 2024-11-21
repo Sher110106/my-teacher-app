@@ -53,6 +53,7 @@ export const signUpAction = async (formData: FormData) => {
   }
 
   // Create profile based on role
+  
   const profile = {
     id: user.id,
     full_name: fullName || schoolName,
@@ -155,8 +156,8 @@ export const forgotPasswordAction = async (formData: FormData) => {
     return encodedRedirect("error", "/forgot-password", "Email is required");
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/confirm?next=/reset-password`,
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+    redirectTo: `https://my-teacher-app.vercel.app/confirm?next=/protected/reset-password` 
   });
 
   if (error) {
